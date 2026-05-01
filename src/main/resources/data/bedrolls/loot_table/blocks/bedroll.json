@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "bedrolls:bedroll",
+          "properties": {
+            "part": "foot"
+          }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "bedrolls:bedroll"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ]
+}

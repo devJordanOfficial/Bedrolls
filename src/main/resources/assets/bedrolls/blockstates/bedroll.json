@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,part=head": { "model": "bedrolls:block/bedroll_head", "y": 0 },
+    "facing=south,part=head": { "model": "bedrolls:block/bedroll_head", "y": 180 },
+    "facing=east,part=head":  { "model": "bedrolls:block/bedroll_head", "y": 90 },
+    "facing=west,part=head":  { "model": "bedrolls:block/bedroll_head", "y": 270 },
+    "facing=north,part=foot": { "model": "bedrolls:block/bedroll_foot", "y": 0 },
+    "facing=south,part=foot": { "model": "bedrolls:block/bedroll_foot", "y": 180 },
+    "facing=east,part=foot":  { "model": "bedrolls:block/bedroll_foot", "y": 90 },
+    "facing=west,part=foot":  { "model": "bedrolls:block/bedroll_foot", "y": 270 }
+  }
+}

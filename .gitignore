@@ -1,0 +1,35 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NeoForge run directory (worlds, logs, configs)
+run/
+
+# Generated mod metadata
+src/generated/
+
+# Eclipse (just in case)
+.classpath
+.project
+.settings/
+bin/
+
+# VSCode
+.vscode/
+
+# Compiled class files
+*.class
+
+# Logs
+*.log

@@ -1,0 +1,8 @@
+{
+  "block.bedrolls.bedroll": "Bedroll",
+  "block.bedrolls.bedroll.spawn_set": "Respawn point set",
+  "deathScreen.respawnAtBedroll": "Respawn at Bedroll",
+  "deathScreen.noBedroll": "No Bedroll Available",
+  "deathScreen.respawnAtWorldSpawn": "Respawn at World Spawn",
+  "block.bedrolls.bed.disabled": "You can only set your spawn at a bedroll"
+}
