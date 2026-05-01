@@ -1,5 +1,6 @@
 package com.infamousgc.bedrolls.network;
 
+import com.infamousgc.bedrolls.Main;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -10,6 +11,7 @@ import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record RespawnAtWorldSpawnPacket() implements CustomPacketPayload {
@@ -29,25 +31,18 @@ public record RespawnAtWorldSpawnPacket() implements CustomPacketPayload {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
                 BlockPos savedPos = player.getRespawnPosition();
-                ResourceKey<Level> savedDim = player.getRespawnDimension();
-                float savedAngle = player.getRespawnAngle();
-                boolean savedForced = player.isRespawnForced();
 
-                // Clear so vanilla respawn flow uses world spawn
+                if (savedPos != null) {
+                    Main.PENDING_SPAWN_RESTORES.put(player.getUUID(), new Main.SavedSpawn(
+                            player.getRespawnDimension(),
+                            savedPos,
+                            player.getRespawnAngle(),
+                            player.isRespawnForced()
+                    ));
+                }
+
                 player.setRespawnPosition(Level.OVERWORLD, null, 0f, false, false);
-
-                // Restore on next tick (after vanilla respawn has completed
-                player.server.tell(new TickTask(
-                        player.server.getTickCount() + 2,
-                        () -> {
-                            if (savedPos != null) {
-                                ServerPlayer current = player.server.getPlayerList().getPlayer(player.getUUID());
-                                if (current != null) {
-                                    current.setRespawnPosition(savedDim, savedPos, savedAngle, savedForced, false);
-                                }
-                            }
-                        }
-                ));
+                PacketDistributor.sendToPlayer(player, new WorldSpawnReadyPacket());
             }
         });
     }

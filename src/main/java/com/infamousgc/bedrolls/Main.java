@@ -2,12 +2,16 @@ package com.infamousgc.bedrolls;
 
 import com.infamousgc.bedrolls.network.RespawnAtWorldSpawnPacket;
 import com.infamousgc.bedrolls.network.SpawnPointStatusPacket;
+import com.infamousgc.bedrolls.network.WorldSpawnReadyPacket;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -25,6 +29,10 @@ import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Mod(Main.MODID)
 public class Main {
 
@@ -37,6 +45,9 @@ public class Main {
     public static final DeferredBlock<BedrollBlock> BEDROLL = BLOCKS.register("bedroll", BedrollBlock::new);
     public static final DeferredItem<BlockItem> BEDROLL_ITEM = ITEMS.registerItem("bedroll", props ->
             new BlockItem(BEDROLL.get(), props), new Item.Properties().stacksTo(1));
+
+    public static final Map<UUID, SavedSpawn> PENDING_SPAWN_RESTORES = new ConcurrentHashMap<>();
+    public record SavedSpawn(ResourceKey<Level> dim, BlockPos pos, float angle, boolean forced) {}
 
     public Main(IEventBus modEventBus, ModContainer modContainer) {
         BLOCKS.register(modEventBus);
@@ -64,6 +75,17 @@ public class Main {
                 PacketDistributor.sendToPlayer(player, new SpawnPointStatusPacket(hasBedroll));
             }
         }
+
+        @SubscribeEvent
+        public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                SavedSpawn saved = PENDING_SPAWN_RESTORES.remove(player.getUUID());
+                if (saved != null) {
+                    player.setRespawnPosition(saved.dim, saved.pos, saved.angle, saved.forced, false);
+                    PacketDistributor.sendToPlayer(player, new SpawnPointStatusPacket(true));
+                }
+            }
+        }
     }
 
     private void addCreative(BuildCreativeModeTabContentsEvent event) {
@@ -83,6 +105,11 @@ public class Main {
                 SpawnPointStatusPacket.TYPE,
                 SpawnPointStatusPacket.CODEC,
                 SpawnPointStatusPacket::handle
+        );
+        registrar.playToClient(
+                WorldSpawnReadyPacket.TYPE,
+                WorldSpawnReadyPacket.CODEC,
+                WorldSpawnReadyPacket::handle
         );
     }
 }

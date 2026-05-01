@@ -66,10 +66,6 @@ public abstract class DeathScreenMixin extends Screen {
                 Component.translatable("deathScreen.respawnAtWorldSpawn"),
                 btn -> {
                     PacketDistributor.sendToServer(new RespawnAtWorldSpawnPacket());
-                    if (this.minecraft != null) {
-                        this.minecraft.player.respawn();
-                        this.minecraft.setScreen(null);
-                    }
                 })
                 .bounds(centerX - 100, buttonY + 24, 200, 20)
                 .build());
