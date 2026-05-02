@@ -2,6 +2,7 @@ package com.infamousgc.bedrolls;
 
 import com.infamousgc.bedrolls.client.SpawnType;
 import com.infamousgc.bedrolls.network.SpawnInfoPacket;
+import com.infamousgc.bedrolls.util.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -112,9 +113,26 @@ public class BedrollBlock extends Block {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
         BlockPos footPos = context.getClickedPos();
         BlockPos headPos = footPos.relative(context.getHorizontalDirection());
-        if (context.getLevel().getBlockState(headPos).isAir()) {
+
+        // Check for nether-like dimensions (where beds don't work)
+        if (!level.dimensionType().bedWorks()) {
+            Config.NetherBedrollBehavior behavior = Config.NETHER_BEDROLL_BEHAVIOR.get();
+
+            if (behavior == Config.NetherBedrollBehavior.DISALLOW) {
+                if (context.getPlayer() instanceof ServerPlayer player) {
+                    player.displayClientMessage(
+                            Component.translatable("block.bedrolls.bedroll.disallowed_here"), true);
+                }
+                return null;
+            }
+            // ALLOW and EXPLODE proceed to normal placement
+            // (EXPLODE is handled in setPlacedBy after placement)
+        }
+
+        if (level.getBlockState(headPos).isAir()) {
             return this.defaultBlockState()
                     .setValue(FACING, context.getHorizontalDirection())
                     .setValue(PART, BedPart.FOOT);
@@ -134,9 +152,31 @@ public class BedrollBlock extends Block {
 
     @Override
     public void setPlacedBy(Level level, @NotNull BlockPos pos, @NotNull BlockState state, LivingEntity placer, @NotNull ItemStack stack) {
-        if (!level.isClientSide && placer instanceof ServerPlayer player) {
-            setRespawn(player, level, pos, state.getValue(FACING));
+        if (level.isClientSide || !(placer instanceof ServerPlayer player)) return;
+
+        // Nether-like dimension handling
+        if (!level.dimensionType().bedWorks()) {
+            Config.NetherBedrollBehavior behavior = Config.NETHER_BEDROLL_BEHAVIOR.get();
+
+            if (behavior == Config.NetherBedrollBehavior.EXPLODE) {
+                // Remove both halves so the explosion doesn't leave debris
+                BlockPos headPos = pos.relative(state.getValue(FACING));
+                level.removeBlock(headPos, false);
+                level.removeBlock(pos, false);
+                // Trigger bed-style explosion at foot position
+                explodeLikeBed(level, pos);
+                return;
+            }
+
+            if (behavior == Config.NetherBedrollBehavior.ALLOW) {
+                // Placed for decoration but don't set spawn
+                player.displayClientMessage(
+                        Component.translatable("block.bedrolls.bedroll.no_spawn_here"), true);
+                return;
+            }
         }
+
+        setRespawn(player, level, pos, state.getValue(FACING));
     }
 
     @Override
@@ -146,12 +186,22 @@ public class BedrollBlock extends Block {
 
     @Override
     public @NotNull InteractionResult useWithoutItem(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull BlockHitResult hit) {
-        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-            BlockPos footPos = state.getValue(PART) == BedPart.FOOT
-                    ? pos
-                    : pos.relative(state.getValue(FACING).getOpposite());
-            setRespawn(serverPlayer, level, footPos, state.getValue(FACING));
+        if (level.isClientSide || !(player instanceof ServerPlayer serverPlayer)) return InteractionResult.SUCCESS;
+
+        BlockPos footPos = state.getValue(PART) == BedPart.FOOT
+                ? pos
+                : pos.relative(state.getValue(FACING).getOpposite());
+
+        // In nether-like dimensions, right-clicking explodes the bedroll (vanilla bed behavior)
+        if (!level.dimensionType().bedWorks()) {
+            BlockPos headPos = pos.relative(state.getValue(FACING));
+            level.removeBlock(headPos, false);
+            level.removeBlock(footPos, false);
+            explodeLikeBed(level, footPos);
+            return InteractionResult.SUCCESS;
         }
+
+        setRespawn(serverPlayer, level, footPos, state.getValue(FACING));
         return InteractionResult.SUCCESS;
     }
 
@@ -188,6 +238,20 @@ public class BedrollBlock extends Block {
         return state.getValue(PART) == BedPart.FOOT
                 ? FOOT_SHAPES.get(state.getValue(FACING))
                 : HEAD_SHAPES.get(state.getValue(FACING));
+    }
+
+    private void explodeLikeBed(Level level, BlockPos pos) {
+        level.explode(
+                null,
+                level.damageSources().badRespawnPointExplosion(pos.getCenter()),
+                null,
+                pos.getX() + 0.5,
+                pos.getY() + 0.5,
+                pos.getZ() + 0.5,
+                5.0F,
+                true,
+                Level.ExplosionInteraction.BLOCK
+        );
     }
 
     private void setRespawn(ServerPlayer serverPlayer, Level level, BlockPos pos, Direction facing) {

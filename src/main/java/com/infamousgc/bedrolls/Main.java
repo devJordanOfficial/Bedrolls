@@ -3,6 +3,7 @@ package com.infamousgc.bedrolls;
 import com.infamousgc.bedrolls.network.RespawnAtWorldSpawnPacket;
 import com.infamousgc.bedrolls.network.SpawnInfoPacket;
 import com.infamousgc.bedrolls.network.WorldSpawnReadyPacket;
+import com.infamousgc.bedrolls.util.Config;
 import com.infamousgc.bedrolls.util.SpawnTypeHelper;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -56,6 +58,7 @@ public class Main {
         ITEMS.register(modEventBus);
         modEventBus.addListener(this::addCreative);
         modEventBus.addListener(this::registerPackets);
+        modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
     }
 
     @EventBusSubscriber(modid = MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -73,7 +76,6 @@ public class Main {
         @SubscribeEvent
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (event.getEntity() instanceof ServerPlayer player) {
-                boolean hasBedroll = player.getRespawnPosition() != null;
                 PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(SpawnTypeHelper.getSpawnType(player)));
             }
         }
