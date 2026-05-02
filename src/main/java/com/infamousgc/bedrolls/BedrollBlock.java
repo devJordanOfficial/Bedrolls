@@ -1,6 +1,6 @@
 package com.infamousgc.bedrolls;
 
-import com.infamousgc.bedrolls.network.SpawnPointStatusPacket;
+import com.infamousgc.bedrolls.network.SpawnInfoPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -173,7 +173,7 @@ public class BedrollBlock extends Block {
             for (ServerPlayer p : server.getPlayerList().getPlayers()) {
                 if (pos.equals(p.getRespawnPosition())) {
                     p.setRespawnPosition(Level.OVERWORLD, null, 0f, false, false);
-                    PacketDistributor.sendToPlayer(p, new SpawnPointStatusPacket(false));
+                    PacketDistributor.sendToPlayer(p, new SpawnInfoPacket(false));
                 }
             }
             clearOfflineSpawns(server, pos);
@@ -202,7 +202,7 @@ public class BedrollBlock extends Block {
         serverPlayer.displayClientMessage(
                 Component.translatable("block.bedrolls.bedroll.spawn_set"), true
         );
-        PacketDistributor.sendToPlayer(serverPlayer, new SpawnPointStatusPacket(true));
+        PacketDistributor.sendToPlayer(serverPlayer, new SpawnInfoPacket(true));
     }
 
     private void clearOfflineSpawns(MinecraftServer server, BlockPos targetPos) {

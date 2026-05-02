@@ -1,7 +1,7 @@
 package com.infamousgc.bedrolls;
 
 import com.infamousgc.bedrolls.network.RespawnAtWorldSpawnPacket;
-import com.infamousgc.bedrolls.network.SpawnPointStatusPacket;
+import com.infamousgc.bedrolls.network.SpawnInfoPacket;
 import com.infamousgc.bedrolls.network.WorldSpawnReadyPacket;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
@@ -72,7 +72,7 @@ public class Main {
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (event.getEntity() instanceof ServerPlayer player) {
                 boolean hasBedroll = player.getRespawnPosition() != null;
-                PacketDistributor.sendToPlayer(player, new SpawnPointStatusPacket(hasBedroll));
+                PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(hasBedroll));
             }
         }
 
@@ -82,7 +82,7 @@ public class Main {
                 SavedSpawn saved = PENDING_SPAWN_RESTORES.remove(player.getUUID());
                 if (saved != null) {
                     player.setRespawnPosition(saved.dim, saved.pos, saved.angle, saved.forced, false);
-                    PacketDistributor.sendToPlayer(player, new SpawnPointStatusPacket(true));
+                    PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(true));
                 }
             }
         }
@@ -102,9 +102,9 @@ public class Main {
                 RespawnAtWorldSpawnPacket::handle
         );
         registrar.playToClient(
-                SpawnPointStatusPacket.TYPE,
-                SpawnPointStatusPacket.CODEC,
-                SpawnPointStatusPacket::handle
+                SpawnInfoPacket.TYPE,
+                SpawnInfoPacket.CODEC,
+                SpawnInfoPacket::handle
         );
         registrar.playToClient(
                 WorldSpawnReadyPacket.TYPE,
