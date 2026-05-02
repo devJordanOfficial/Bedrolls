@@ -1,5 +1,5 @@
 package com.infamousgc.bedrolls.client;
 
 public class BedrollClientData {
-    public static boolean hasBedroll = false;
+    public static SpawnType spawnType = SpawnType.NONE;
 }

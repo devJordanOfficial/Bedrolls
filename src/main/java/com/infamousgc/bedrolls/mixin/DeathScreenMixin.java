@@ -1,6 +1,7 @@
 package com.infamousgc.bedrolls.mixin;
 
 import com.infamousgc.bedrolls.client.BedrollClientData;
+import com.infamousgc.bedrolls.client.SpawnType;
 import com.infamousgc.bedrolls.network.RespawnAtWorldSpawnPacket;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -40,16 +41,14 @@ public abstract class DeathScreenMixin extends Screen {
             this.removeWidget(widget);
         }
 
-        boolean hasBedroll = BedrollClientData.hasBedroll;
+        SpawnType spawnType = BedrollClientData.spawnType;
 
         int centerX = this.width / 2;
         int buttonY = this.height / 4 + 72;
 
         // Respawn at Bedroll
-        Button bedrollButton = Button.builder(
-                hasBedroll
-                ? Component.translatable("deathScreen.respawnAtBedroll")
-                : Component.translatable("deathScreen.noBedroll"),
+        Button spawnButton = Button.builder(
+                spawnType.getButtonLabel(),
                 btn -> {
                     if (this.minecraft != null && this.minecraft.player != null) {
                         this.minecraft.player.respawn();
@@ -58,8 +57,8 @@ public abstract class DeathScreenMixin extends Screen {
                 })
                 .bounds(centerX - 100, buttonY, 200, 20)
                 .build();
-        bedrollButton.active = hasBedroll;
-        this.addRenderableWidget(bedrollButton);
+        spawnButton.active = spawnType.buttonActive;
+        this.addRenderableWidget(spawnButton);
 
         // Respawn at World Spawn
         this.addRenderableWidget(Button.builder(

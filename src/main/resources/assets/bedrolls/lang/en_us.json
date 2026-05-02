@@ -4,5 +4,7 @@
   "deathScreen.respawnAtBedroll": "Respawn at Bedroll",
   "deathScreen.noBedroll": "No Bedroll Available",
   "deathScreen.respawnAtWorldSpawn": "Respawn at World Spawn",
+  "deathScreen.respawnAtAnchor": "Respawn at Respawn Anchor",
+  "deathScreen.noAnchorCharged": "No Respawn Anchor Charges",
   "block.bedrolls.bed.disabled": "You can only set your spawn at a bedroll"
 }

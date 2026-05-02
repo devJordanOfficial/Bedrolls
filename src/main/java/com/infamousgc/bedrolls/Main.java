@@ -3,6 +3,7 @@ package com.infamousgc.bedrolls;
 import com.infamousgc.bedrolls.network.RespawnAtWorldSpawnPacket;
 import com.infamousgc.bedrolls.network.SpawnInfoPacket;
 import com.infamousgc.bedrolls.network.WorldSpawnReadyPacket;
+import com.infamousgc.bedrolls.util.SpawnTypeHelper;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -20,6 +21,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -72,7 +74,14 @@ public class Main {
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
             if (event.getEntity() instanceof ServerPlayer player) {
                 boolean hasBedroll = player.getRespawnPosition() != null;
-                PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(hasBedroll));
+                PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(SpawnTypeHelper.getSpawnType(player)));
+            }
+        }
+
+        @SubscribeEvent
+        public static void onPlayerDeath(LivingDeathEvent event) {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(SpawnTypeHelper.getSpawnType(player)));
             }
         }
 
@@ -82,7 +91,7 @@ public class Main {
                 SavedSpawn saved = PENDING_SPAWN_RESTORES.remove(player.getUUID());
                 if (saved != null) {
                     player.setRespawnPosition(saved.dim, saved.pos, saved.angle, saved.forced, false);
-                    PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(true));
+                    PacketDistributor.sendToPlayer(player, new SpawnInfoPacket(SpawnTypeHelper.getSpawnType(player)));
                 }
             }
         }
