@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -19,6 +20,10 @@ import java.util.List;
 
 @Mixin(DeathScreen.class)
 public abstract class DeathScreenMixin extends Screen {
+
+    @Shadow private int delayTicker;
+
+    private Button worldSpawnButton;
 
     protected DeathScreenMixin(Component title) {
         super(title);
@@ -61,13 +66,13 @@ public abstract class DeathScreenMixin extends Screen {
         this.addRenderableWidget(spawnButton);
 
         // Respawn at World Spawn
-        this.addRenderableWidget(Button.builder(
+        worldSpawnButton = Button.builder(
                 Component.translatable("deathScreen.respawnAtWorldSpawn"),
-                btn -> {
-                    PacketDistributor.sendToServer(new RespawnAtWorldSpawnPacket());
-                })
+                btn -> PacketDistributor.sendToServer(new RespawnAtWorldSpawnPacket()))
                 .bounds(centerX - 100, buttonY + 24, 200, 20)
-                .build());
+                .build();
+        worldSpawnButton.active = false;
+        this.addRenderableWidget(worldSpawnButton);
 
         // Re-layout: shift the existing Title Screen button down so it doesn't overlap
         for (var child : this.children()) {
@@ -76,6 +81,13 @@ public abstract class DeathScreenMixin extends Screen {
                 button.setY(button.getY() + 48);
             }
 
+        }
+    }
+
+    @Inject(method = "tick", at = @At("TAIL"))
+    private void updateButtonStates(CallbackInfo ci) {
+        if (worldSpawnButton != null) {
+            worldSpawnButton.active = delayTicker >= 20;
         }
     }
 }
